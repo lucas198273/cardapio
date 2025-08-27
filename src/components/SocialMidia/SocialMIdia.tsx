@@ -26,6 +26,7 @@ const SocialMediaSection: React.FC = () => {
           </h2>
 
           <p className="mb-6 text-lg italic text-gray-300">
+            
             Siga nossas redes sociais e fique por dentro de promoções, novidades e nossos lanches exclusivos.
           </p>
 
