@@ -32,35 +32,56 @@ const HorarioAlert: React.FC = () => {
       </div>
 
       {/* MODAL DE HORÁRIOS */}
-      {verHorario && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-lg relative">
-            <button
-              onClick={() => setVerHorario(false)}
-              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 font-bold text-xl"
-            >
-              ×
-            </button>
+     {verHorario && (
+  <div className="fixed inset-0 bg-[rgba(0,0,0,0.85)] flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden relative animate-fadeIn">
+      
+      {/* CABEÇALHO */}
+      <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200">
+        <h2 className="text-2xl font-bold text-green-700">
+          Horário de Funcionamento
+        </h2>
+        <button
+          onClick={() => setVerHorario(false)}
+          className="text-gray-400 hover:text-gray-700 transition-colors text-3xl font-bold"
+          aria-label="Fechar modal"
+        >
+          ×
+        </button>
+      </div>
 
-            <h2 className="text-2xl font-bold mb-4 text-green-700">
-              Horário de Funcionamento
-            </h2>
+      {/* CONTEÚDO */}
+      <div className="px-6 py-4">
+        <table className="w-full border-collapse">
+          <tbody>
+            {horarioFuncionamento.map((dia, idx) => (
+              <tr
+                key={dia.dia}
+                className={idx % 2 === 0 ? "bg-gray-50" : "bg-white"}
+              >
+                <td className="py-3 px-4 font-medium text-gray-700">{dia.dia}</td>
+                <td className="py-3 px-4 text-gray-600">
+                  {dia.abertura ? `${dia.abertura} - ${dia.fechamento}` : "Fechado"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-            <table className="w-full text-left border-collapse">
-              <tbody>
-                {horarioFuncionamento.map((dia) => (
-                  <tr key={dia.dia} className="border-b">
-                    <td className="py-2 font-semibold">{dia.dia}</td>
-                    <td className="py-2">
-                      {dia.abertura ? `${dia.abertura} - ${dia.fechamento}` : "Fechado"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+      {/* RODAPÉ */}
+      <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
+        <button
+          onClick={() => setVerHorario(false)}
+          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+        >
+          Fechar
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
     </>
   );
 };

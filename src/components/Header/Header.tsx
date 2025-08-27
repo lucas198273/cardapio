@@ -49,11 +49,18 @@ export default function DeliveryHeader({ onCartClick, cartItemCount }: Props) {
       zIndex="50"
       bg={isScrolled ? "whiteAlpha.900" : "white"}
       borderBottom="2px solid"
-      borderColor="green.400"
+      borderColor="red.500"
       boxShadow={isScrolled ? "sm" : "none"}
       transition="all 0.3s ease"
     >
-      <Flex maxW="7xl" mx="auto" h="20" px={{ base: 4, md: 8 }} align="center" justify="space-between">
+      <Flex
+        maxW="7xl"
+        mx="auto"
+        h="20"
+        px={{ base: 4, md: 8 }}
+        align="center"
+        justify="space-between"
+      >
         {/* Mobile Menu */}
         <IconButton
           icon={isOpen ? <CloseIcon /> : <HamburgerIcon />}
@@ -61,7 +68,7 @@ export default function DeliveryHeader({ onCartClick, cartItemCount }: Props) {
           display={{ base: "block", md: "none" }}
           onClick={isOpen ? onClose : onOpen}
           variant="ghost"
-          color="green.400"
+          color="red.500"
         />
 
         {/* Desktop Nav Links */}
@@ -72,8 +79,8 @@ export default function DeliveryHeader({ onCartClick, cartItemCount }: Props) {
               as={RouterLink}
               to={link.to}
               fontWeight="bold"
-              color="green.400"
-              _hover={{ color: "green.500" }}
+              color="red.500"
+              _hover={{ color: "red.600" }}
             >
               {link.label}
             </Link>
@@ -81,9 +88,22 @@ export default function DeliveryHeader({ onCartClick, cartItemCount }: Props) {
         </HStack>
 
         {/* Logo Center */}
-        <Box position="absolute" left="50%" transform="translateX(-50%)">
+        <Box
+          position="absolute"
+          left="50%"
+          transform="translateX(-50%)"
+          bg="black"
+          borderRadius="full"
+          p="1"
+          boxShadow="lg"
+        >
           <Link as={RouterLink} to="/">
-            <Image src="/image.png" alt="The Brothers Hamburgueria" h="16" />
+            <Image
+              src="/himgs/logo.webp"
+              alt="The Brothers Hamburgueria"
+              h="14"
+              className="rounded-full transition-transform duration-300 hover:scale-105"
+            />
           </Link>
         </Box>
 
@@ -98,7 +118,7 @@ export default function DeliveryHeader({ onCartClick, cartItemCount }: Props) {
               </Box>
             }
             variant="ghost"
-            color="green.400"
+            color="red.500"
             onClick={onCartClick}
           />
           {cartItemCount > 0 && (
@@ -106,7 +126,7 @@ export default function DeliveryHeader({ onCartClick, cartItemCount }: Props) {
               position="absolute"
               top="0"
               right="0"
-              bg="green.400"
+              bg="red.500"
               color="white"
               borderRadius="full"
               fontSize="xs"
@@ -120,7 +140,12 @@ export default function DeliveryHeader({ onCartClick, cartItemCount }: Props) {
       </Flex>
 
       {/* Mobile Drawer */}
-      <Drawer isOpen={isOpen} onClose={onClose} finalFocusRef={btnRef} placement="left">
+      <Drawer
+        isOpen={isOpen}
+        onClose={onClose}
+        finalFocusRef={btnRef}
+        placement="left"
+      >
         <DrawerOverlay />
         <DrawerContent>
           <DrawerCloseButton />
@@ -133,9 +158,9 @@ export default function DeliveryHeader({ onCartClick, cartItemCount }: Props) {
                   as={RouterLink}
                   to={link.to}
                   fontSize="lg"
-                  color="green.400"
+                  color="red.500"
                   onClick={onClose}
-                  _hover={{ color: "green.500" }}
+                  _hover={{ color: "red.600" }}
                 >
                   {link.label}
                 </Link>

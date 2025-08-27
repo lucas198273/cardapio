@@ -16,7 +16,7 @@ const SocialMediaSection: React.FC = () => {
       <section className="py-12 px-4 bg-[#0a0a1a] text-white">
         <div className="max-w-4xl mx-auto text-center">
           <img
-            src="/assets/logo.webp"
+            src="/himgs/logo.webp"
             alt="Hamburgueria Logo"
             className="mx-auto mb-6 w-36 h-36 object-cover rounded-full border-4 border-green-400 shadow-xl"
           />

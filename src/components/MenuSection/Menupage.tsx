@@ -24,10 +24,16 @@ export default function MenuPage() {
   });
 
   return (
-    <Box py={8}>
+    <Box py={8} bg="white">
       <Container maxW="7xl">
         <Stack spacing={6}>
-          <Heading as="h1" size="xl" textAlign="center" color="teal.500">
+          <Heading
+            as="h1"
+            size="xl"
+            textAlign="center"
+            color="green.600"
+            textShadow="1px 1px 2px rgba(0,0,0,0.2)"
+          >
             Cardápio
           </Heading>
 
@@ -39,7 +45,9 @@ export default function MenuPage() {
             borderRadius="full"
             bg="white"
             shadow="sm"
-            _focus={{ shadow: "md", borderColor: "teal.400" }}
+            border="2px solid"
+            borderColor="green.400"
+            _focus={{ shadow: "md", borderColor: "green.500" }}
           />
 
           <Stack direction="row" justify="center" wrap="wrap" spacing={3}>
@@ -47,9 +55,10 @@ export default function MenuPage() {
               <Button
                 key={cat.key}
                 size="sm"
-                colorScheme={activeCategory === cat.key ? "teal" : "gray"}
+                colorScheme={activeCategory === cat.key ? "green" : "gray"}
                 onClick={() => setActiveCategory(cat.key)}
                 borderRadius="full"
+                variant={activeCategory === cat.key ? "solid" : "outline"}
               >
                 {cat.label}
               </Button>

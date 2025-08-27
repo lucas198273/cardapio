@@ -15,9 +15,12 @@ import {
   Button,
   Input,
   Textarea,
+  Alert,
+  AlertIcon,
 } from "@chakra-ui/react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { verificarHorarioAtual } from "../../utils/horarios";
 
 interface Props {
   isOpen: boolean;
@@ -37,13 +40,27 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
     referencia: "",
   });
 
+  const [aberto, setAberto] = useState(true);
+  const [mensagemHorario, setMensagemHorario] = useState("");
+
   useEffect(() => {
     AOS.init({ duration: 300, easing: "ease-in-out", once: true });
+
+    const status = verificarHorarioAtual();
+    setAberto(status.aberto);
+    setMensagemHorario(status.mensagem);
   }, []);
 
   if (!isOpen) return null;
 
   const handleWhatsAppClick = () => {
+    if (!aberto) {
+      toast.error(
+        `⚠️ Desculpe, estamos fechados no momento! ${mensagemHorario}`
+      );
+      return;
+    }
+
     if (items.length === 0) {
       toast.warning("Seu carrinho está vazio!");
       return;
@@ -82,7 +99,9 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
       2
     )}\n${infoAdicional}\nObservação: ${observacao}`;
 
-    const link = `https://wa.me/5531990639998?text=${encodeURIComponent(mensagem)}`;
+    const link = `https://wa.me/5531990639998?text=${encodeURIComponent(
+      mensagem
+    )}`;
     window.open(link, "_blank");
 
     toast.success("Pedido enviado para o WhatsApp!");
@@ -123,14 +142,14 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
           justify="space-between"
           p={6}
           borderBottom="1px"
-          borderColor="red.700"
+          borderColor="green.600"
         >
-          <Text fontSize="2xl" fontWeight="bold" color="red.700">
+          <Text fontSize="2xl" fontWeight="bold" color="green.600">
             Meu Carrinho
           </Text>
           <Button
             variant="ghost"
-            color="red.700"
+            color="green.600"
             fontSize="2xl"
             onClick={onClose}
             aria-label="Fechar carrinho"
@@ -138,6 +157,19 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
             ✕
           </Button>
         </Flex>
+
+        {/* ALERTA FIXO DE FECHADO */}
+        {!aberto && (
+          <Alert
+            status="error"
+            variant="solid"
+            borderRadius="none"
+            justifyContent="center"
+          >
+            <AlertIcon />
+            {mensagemHorario || "⚠️ Estamos fechados no momento"}
+          </Alert>
+        )}
 
         {/* EMPTY CART */}
         {items.length === 0 ? (
@@ -155,7 +187,7 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
 
             {/* PEDIDO TIPO */}
             <VStack spacing={4} px={6} py={4} align="start">
-              <Text fontWeight="semibold" color="red.700">
+              <Text fontWeight="semibold" color="green.600">
                 Tipo de Pedido:
               </Text>
               <HStack spacing={4} flexWrap="wrap">
@@ -165,14 +197,6 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
                     <button
                       key={tipo}
                       onClick={() => setPedidoTipo(tipo as "mesa" | "entrega")}
-                      onMouseEnter={(e) =>
-                        !isActive &&
-                        e.currentTarget.classList.add(styles.buttonHover)
-                      }
-                      onMouseLeave={(e) =>
-                        !isActive &&
-                        e.currentTarget.classList.remove(styles.buttonHover)
-                      }
                       className={`${styles.button} ${
                         isActive ? styles.buttonActive : styles.buttonInactive
                       }`}
@@ -193,14 +217,6 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
                         key={num}
                         onClick={() =>
                           setMesaSelecionada(isSelected ? null : String(num))
-                        }
-                        onMouseEnter={(e) =>
-                          !isSelected &&
-                          e.currentTarget.classList.add(styles.buttonHover)
-                        }
-                        onMouseLeave={(e) =>
-                          !isSelected &&
-                          e.currentTarget.classList.remove(styles.buttonHover)
                         }
                         className={`${styles.button} ${
                           isSelected ? styles.buttonActive : styles.buttonInactive
@@ -232,7 +248,7 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
                       onChange={(e) =>
                         setEndereco({ ...endereco, [_field]: e.target.value })
                       }
-                      focusBorderColor="red.700"
+                      focusBorderColor="green.600"
                       borderRadius="md"
                     />
                   ))}
@@ -244,7 +260,7 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
                 placeholder="Observação do pedido (opcional)"
                 value={observacao}
                 onChange={(e) => setObservacao(e.target.value)}
-                focusBorderColor="red.700"
+                focusBorderColor="green.600"
                 borderRadius="md"
                 w="full"
                 mt={2}
@@ -257,19 +273,24 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
               justify="space-between"
               p={6}
               borderTop="1px"
-              borderColor="red.700"
-              bg="yellow.50"
+              borderColor="green.600"
+              bg="green.50"
             >
-              <Text fontWeight="semibold" fontSize="xl" color="red.700">
+              <Text fontWeight="semibold" fontSize="xl" color="green.600">
                 Total:
               </Text>
-              <Text color="red.700" fontWeight="bold" fontSize="2xl">
+              <Text color="green.600" fontWeight="bold" fontSize="2xl">
                 R$ {total.toFixed(2)}
               </Text>
             </Flex>
 
             {/* BUTTONS */}
-            <Flex direction={{ base: "column", sm: "row" }} gap={4} px={6} pb={6}>
+            <Flex
+              direction={{ base: "column", sm: "row" }}
+              gap={4}
+              px={6}
+              pb={6}
+            >
               <button
                 onClick={handleClearCart}
                 className={`${styles.button} ${styles.limpar}`}
