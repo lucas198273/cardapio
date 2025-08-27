@@ -10,7 +10,7 @@ interface Props {
 }
 
 const CartRow: React.FC<Props> = ({ item, onRemove }) => {
-  const { incrementQuantity, decrementQuantity, addItem, removeItem, items } = useCart();
+  const { incrementQuantity, decrementQuantity, addItem, items } = useCart();
 
   const handleAddCombo = () => {
     const existingCombos = items.filter(
