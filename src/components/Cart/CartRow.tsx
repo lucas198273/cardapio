@@ -95,9 +95,7 @@ const CartRow: React.FC<Props> = ({ item, onRemove }) => {
           <Button size="sm" colorScheme="green" onClick={handleAddCombo} minW="100px">
             Adicionar Combo
           </Button>
-          <Button size="sm" colorScheme="red" onClick={handleRemoveCombo} minW="100px">
-            Remover Combo
-          </Button>
+         
         </HStack>
         <Text fontSize="sm" color="green.700" noOfLines={1}>
           + Refrigerante 350ml e Batata
