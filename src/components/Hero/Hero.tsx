@@ -57,24 +57,25 @@ export default function Hero() {
       >
         {/* Texto e Logos */}
         <Box mb={{ base: 10, md: 0 }} data-aos="fade-right">
-          {/* Logos lado a lado */}
+          {/* Logos lado a lado em todas as resoluções */}
           <Flex
-            direction={{ base: "column", md: "row" }}
+            direction="row" // Força linha em todas as resoluções
             alignItems="center"
             justifyContent={{ base: "center", md: "flex-start" }}
             mb={6}
-            gap={4} // espaçamento entre as logos
+            gap={{ base: 2, md: 4 }} // Espaçamento menor em mobile, maior em desktop
+            flexWrap="wrap" // Permite quebra de linha se necessário
           >
             <Image
               src="/himgs/logo.webp"
               alt="Logo The Brothers 1"
-              maxH="120px"
+              maxH={{ base: "80px", md: "120px" }} // Tamanho menor em mobile
               data-aos="zoom-in"
             />
             <Image
               src="/himgs/logo2.webp"
               alt="Logo The Brothers 2"
-              maxH="120px"
+              maxH={{ base: "80px", md: "120px" }} // Tamanho menor em mobile
               data-aos="zoom-in"
             />
           </Flex>
