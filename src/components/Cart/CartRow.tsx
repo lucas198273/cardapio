@@ -36,16 +36,7 @@ const CartRow: React.FC<Props> = ({ item, onRemove }) => {
     toast.success("Combo adicionado com sucesso!");
   };
 
-  const handleRemoveCombo = () => {
-    const comboItem = items.find((i) => i.isCombo && i.id === `combo-${item.id}`);
-    if (!comboItem) {
-      toast.info("Nenhum combo deste item para remover!");
-      return;
-    }
-    removeItem(comboItem.id);
-    toast.success("Combo removido!");
-  };
-
+ 
   return (
     <Flex
       w="full"
