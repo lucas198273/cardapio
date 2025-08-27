@@ -5,21 +5,19 @@ import {
   Flex,
   Heading,
   Text,
-
   Image,
-
+  Stack,
 } from "@chakra-ui/react";
 import { useEffect } from "react";
 import AOS from "aos";
 import "aos/dist/aos.css";
 
 export default function Hero() {
-
-
   useEffect(() => {
     AOS.init({
-      duration: 1000,
-      once: true, // anima apenas uma vez ao entrar na tela
+      duration: 1200,
+      easing: "ease-in-out",
+      once: true,
     });
   }, []);
 
@@ -28,7 +26,8 @@ export default function Hero() {
       as="section"
       position="relative"
       w="full"
-      h={{ base: "80vh", md: "90vh" }}
+      minH={{ base: "100vh", md: "100vh" }} // altura mínima da tela, mas cresce se necessário
+      py={{ base: 12, md: 20 }} // padding interno
       _before={{
         content: `""`,
         position: "absolute",
@@ -36,9 +35,9 @@ export default function Hero() {
         left: 0,
         w: "full",
         h: "full",
-        bgGradient: "linear(to-b, #0a0a1a, red.600)", // degradê verde esmeralda escuro para branco
+        bgGradient: "linear(to-b, #0a0a1a, red.600)",
         zIndex: 0,
-      }} // linear(to-b, #0a0a1a, whiteAlpha.100)
+      }}
       display="flex"
       alignItems="center"
       justifyContent="center"
@@ -48,18 +47,38 @@ export default function Hero() {
         position="relative"
         zIndex={1}
         direction={{ base: "column-reverse", md: "row" }}
-        maxW="6xl"
+        maxW="7xl"
         w="full"
         align="center"
         justify="space-between"
         px={6}
+        gap={{ base: 10, md: 16 }} // espaçamento entre texto e imagem
         textAlign={{ base: "center", md: "left" }}
       >
-        {/* Texto */}
-        <Box
-          mb={{ base: 8, md: 0 }}
-          data-aos="fade-right"
-        >
+        {/* Texto e Logos */}
+        <Box mb={{ base: 10, md: 0 }} data-aos="fade-right">
+          {/* Logos lado a lado */}
+          <Flex
+            direction={{ base: "column", md: "row" }}
+            alignItems="center"
+            justifyContent={{ base: "center", md: "flex-start" }}
+            mb={6}
+            gap={4} // espaçamento entre as logos
+          >
+            <Image
+              src="/himgs/logo.webp"
+              alt="Logo The Brothers 1"
+              maxH="120px"
+              data-aos="zoom-in"
+            />
+            <Image
+              src="/himgs/logo2.webp"
+              alt="Logo The Brothers 2"
+              maxH="120px"
+              data-aos="zoom-in"
+            />
+          </Flex>
+
           <Heading
             as="h1"
             fontSize={{ base: "3xl", md: "5xl" }}
@@ -67,34 +86,46 @@ export default function Hero() {
             color="white"
             mb={4}
           >
-            Peça seu hambúrguer favorito
+            Bem-vindo ao <br /> The Brothers Bar 🍻
           </Heading>
-          <Text fontSize={{ base: "md", md: "xl" }} color="whiteAlpha.800" mb={6}>
-            Delivery rápido, saboroso e feito com ingredientes frescos.
+
+          <Text
+            fontSize={{ base: "md", md: "xl" }}
+            color="whiteAlpha.800"
+            mb={6}
+          >
+            Petiscos irresistíveis, hambúrgueres artesanais e aquela cerveja
+            gelada do jeito que você gosta.
           </Text>
-         
+
+          {/* Endereço */}
+          <Stack
+            spacing={1}
+            fontSize={{ base: "sm", md: "md" }}
+            color="whiteAlpha.900"
+            data-aos="fade-up"
+          >
+            <Text>📍 Rua das Tradições, 123 - Belo Horizonte/MG</Text>
+            <Text>🕒 Terça a Domingo | 18h às 02h</Text>
+          </Stack>
         </Box>
 
         {/* Imagem lateral */}
         <Box
           display={{ base: "block", md: "block" }}
-          mb={{ base: 6, md: 0, mt: 8 }}
           data-aos="fade-left"
         >
           <Image
-            src="/himgs/image.png" // ajuste do caminho da imagem
-            alt="Hambúrguer suculento"
-            borderRadius="xl"
+            src="/himgs/image.png"
+            alt="Ambiente do bar"
+            borderRadius="2xl"
             shadow="2xl"
-            maxH={{ base: "250px", md: "400px" }}
+            maxH={{ base: "280px", md: "460px" }}
             objectFit="cover"
             mx="auto"
           />
         </Box>
       </Flex>
-
-{/* Modal */}
-    
     </Box>
   );
 }
