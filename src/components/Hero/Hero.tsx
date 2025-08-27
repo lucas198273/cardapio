@@ -5,22 +5,16 @@ import {
   Flex,
   Heading,
   Text,
-  Button,
+
   Image,
-  useDisclosure,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalCloseButton,
+
 } from "@chakra-ui/react";
 import { useEffect } from "react";
 import AOS from "aos";
 import "aos/dist/aos.css";
 
 export default function Hero() {
-  const { isOpen, onOpen, onClose } = useDisclosure();
+
 
   useEffect(() => {
     AOS.init({
@@ -78,17 +72,7 @@ export default function Hero() {
           <Text fontSize={{ base: "md", md: "xl" }} color="whiteAlpha.800" mb={6}>
             Delivery rápido, saboroso e feito com ingredientes frescos.
           </Text>
-          <Button
-            onClick={onOpen}
-            bg="green.500"
-            color="white"
-            _hover={{ bg: "green.600" }}
-            size="lg"
-            data-aos="zoom-in"
-            data-aos-delay="200"
-          >
-            Ver Cardápio
-          </Button>
+         
         </Box>
 
         {/* Imagem lateral */}
@@ -109,30 +93,8 @@ export default function Hero() {
         </Box>
       </Flex>
 
-      {/* Modal */}
-      <Modal isOpen={isOpen} onClose={onClose} isCentered>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Cardápio</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody pb={6}>
-            <Text fontSize="md" mb={3}>
-              Aqui você pode colocar o link do seu cardápio online, um formulário para pedidos ou qualquer ação que quiser.
-            </Text>
-            <Button
-              as="a"
-              href="https://wa.me/5531999999999"
-              target="_blank"
-              w="full"
-              bg="green.500"
-              color="white"
-              _hover={{ bg: "green.600" }}
-            >
-              Pedir via WhatsApp
-            </Button>
-          </ModalBody>
-        </ModalContent>
-      </Modal>
+{/* Modal */}
+    
     </Box>
   );
 }
