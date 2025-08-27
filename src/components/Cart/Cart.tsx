@@ -21,6 +21,7 @@ import {
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { verificarHorarioAtual } from "../../utils/horarios";
+import { savePedido, getPedidos, clearPedidos, deletePedido } from "../../db/db"; // Ajuste o caminho
 
 interface Props {
   isOpen: boolean;
@@ -42,6 +43,7 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
 
   const [aberto, setAberto] = useState(true);
   const [mensagemHorario, setMensagemHorario] = useState("");
+  const [historico, setHistorico] = useState<any[]>([]);
 
   useEffect(() => {
     AOS.init({ duration: 300, easing: "ease-in-out", once: true });
@@ -49,15 +51,24 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
     const status = verificarHorarioAtual();
     setAberto(status.aberto);
     setMensagemHorario(status.mensagem);
+    carregarHistorico();
   }, []);
+
+  const carregarHistorico = async () => {
+    try {
+      const pedidos = await getPedidos();
+      setHistorico(pedidos);
+    } catch (err) {
+      console.error("Erro ao carregar histórico:", err);
+      toast.error("Erro ao carregar o histórico!");
+    }
+  };
 
   if (!isOpen) return null;
 
-  const handleWhatsAppClick = () => {
+  const handleWhatsAppClick = async () => {
     if (!aberto) {
-      toast.error(
-        `⚠️ Desculpe, estamos fechados no momento! ${mensagemHorario}`
-      );
+      toast.error(`⚠️ Desculpe, estamos fechados no momento! ${mensagemHorario}`);
       return;
     }
 
@@ -73,20 +84,40 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
       toast.warning("Selecione uma mesa!");
       return;
     }
-    if (
-      pedidoTipo === "entrega" &&
-      (!endereco.nome || !endereco.rua || !endereco.bairro)
-    ) {
+    if (pedidoTipo === "entrega" && (!endereco.nome || !endereco.rua || !endereco.bairro)) {
       toast.warning("Preencha todos os campos de entrega!");
       return;
+    }
+
+    const pedidoData = {
+      userId: "cliente123",
+      pedido: items.map((item) => ({
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price,
+      })),
+      total,
+      data: new Date(),
+      status: "pendente",
+      tipo: pedidoTipo,
+      mesa: mesaSelecionada,
+      observacao,
+      endereco,
+    };
+
+    try {
+      await savePedido(pedidoData);
+      await carregarHistorico();
+      toast.success("Pedido salvo e enviado para o WhatsApp!");
+    } catch (err) {
+      console.error("Erro ao salvar pedido:", err);
+      toast.error("Erro ao salvar o pedido!");
     }
 
     const itensFormatados = items
       .map(
         (item) =>
-          `• ${item.name}\n  Quantidade: ${item.quantity}\n  Valor: R$${item.price.toFixed(
-            2
-          )}`
+          `• ${item.name}\n  Quantidade: ${item.quantity}\n  Valor: R$${item.price.toFixed(2)}`
       )
       .join("\n\n");
 
@@ -99,17 +130,24 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
       2
     )}\n${infoAdicional}\nObservação: ${observacao}`;
 
-    const link = `https://wa.me/5531990639998?text=${encodeURIComponent(
-      mensagem
-    )}`;
+    const link = `https://wa.me/5531990639998?text=${encodeURIComponent(mensagem)}`;
     window.open(link, "_blank");
-
-    toast.success("Pedido enviado para o WhatsApp!");
   };
 
   const handleClearCart = () => {
     clearCart();
     toast.info("Carrinho limpo!");
+  };
+
+  const handleClearHistorico = async () => {
+    try {
+      await clearPedidos();
+      await carregarHistorico();
+      toast.info("Histórico limpo!");
+    } catch (err) {
+      console.error("Erro ao limpar histórico:", err);
+      toast.error("Erro ao limpar o histórico!");
+    }
   };
 
   return (
@@ -291,21 +329,70 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
               px={6}
               pb={6}
             >
-              <button
+              <Button
                 onClick={handleClearCart}
                 className={`${styles.button} ${styles.limpar}`}
-                disabled={items.length === 0}
+                isDisabled={items.length === 0}
+                w={{ base: "full", sm: "auto" }}
               >
                 Limpar
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleWhatsAppClick}
                 className={styles.button}
-                disabled={items.length === 0}
+                isDisabled={items.length === 0}
+                w={{ base: "full", sm: "auto" }}
               >
                 Finalizar no WhatsApp
-              </button>
+              </Button>
+              <Button
+                onClick={carregarHistorico}
+                className={styles.button}
+                w={{ base: "full", sm: "auto" }}
+              >
+                Ver Histórico
+              </Button>
+              <Button
+                onClick={handleClearHistorico}
+                className={`${styles.button} ${styles.limpar}`}
+                w={{ base: "full", sm: "auto" }}
+              >
+                Limpar Histórico
+              </Button>
             </Flex>
+
+            {/* HISTÓRICO */}
+            {historico.length > 0 && (
+              <VStack spacing={2} px={6} py={4} align="start">
+                <Text fontWeight="semibold" color="green.600">
+                  Histórico de Pedidos
+                </Text>
+                <VStack spacing={1} align="start">
+                  {historico.map((pedido) => (
+                    <Flex
+                      key={pedido.id}
+                      justify="space-between"
+                      w="full"
+                      p={2}
+                      bg="green.50"
+                      borderRadius="md"
+                    >
+                      <Text fontSize="sm" color="gray.700">
+                        Pedido #{pedido.id}: R$ {pedido.total.toFixed(2)} em{" "}
+                        {new Date(pedido.data).toLocaleString()}
+                      </Text>
+                      <Button
+                        size="xs"
+                        colorScheme="red"
+                        onClick={() => deletePedido(pedido.id).then(carregarHistorico)}
+                      >
+                        Excluir
+                      </Button>
+                    </Flex>
+                  ))}
+                </VStack>
+              </VStack>
+            )}
           </>
         )}
       </Box>
