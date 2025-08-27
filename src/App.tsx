@@ -22,10 +22,7 @@ export default function AppContent() {
     AOS.init({ duration: 1000, once: true });
   }, []);
 
-  const handleSearch = (q: string) => {
-    console.log("Procurando por:", q);
-    // lógica de navegação ou filtro aqui
-  };
+
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-100 text-gray-800">
