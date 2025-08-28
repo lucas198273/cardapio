@@ -14,8 +14,8 @@ import PoliticaEPrivacidade from "./pages/PoliticasEPrivacidade";
 import MenuPage from "./components/MenuSection/Menupage.tsx";
 import HorioAlert from "./components/HorarioAlert/HorarioAlert.tsx";
 import AboutUs from "./pages/AboutUs.tsx";
-// 👇 importa o supabase client
 import { supabase } from "./lib/supabaseClient";
+import OrdersPanel from "./pages/OrdersPanel.tsx";
 
 export default function AppContent() {
   const { items, total, isCartOpen, openCart, closeCart } = useCart();
@@ -23,7 +23,6 @@ export default function AppContent() {
   useEffect(() => {
     AOS.init({ duration: 1000, once: true });
 
-    // 🚀 Teste de conexão com Supabase
     async function testConnection() {
       const { data, error } = await supabase.from("pedidos").select("*").limit(1);
       if (error) {
@@ -37,7 +36,7 @@ export default function AppContent() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-100 text-gray-800">
+    <div className="min-h-screen flex flex-col bg-gray-100 text-gray-800 max-w-7xl mx-auto w-full">
       <Header onCartClick={openCart} cartItemCount={items.length} />
 
       <ScrollToTopOnRouteChange />
@@ -48,7 +47,7 @@ export default function AppContent() {
           path="/"
           element={
             <>
-              <main className="pt-20 flex flex-col">
+              <main className="pt-20 flex flex-col w-full">
                 <HorioAlert />
                 <Hero />
                 <MenuPage />
@@ -59,6 +58,7 @@ export default function AppContent() {
         />
         <Route path="/Politicas" element={<PoliticaEPrivacidade />} />
         <Route path="/about" element={<AboutUs />} />
+        <Route path="/orders" element={<OrdersPanel />} />
       </Routes>
 
       <Footer />

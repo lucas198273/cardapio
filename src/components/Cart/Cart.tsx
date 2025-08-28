@@ -25,6 +25,15 @@ import db from "../../db/db";
 import { supabase } from "../../lib/supabaseClient";
 import { v4 as uuidv4 } from "uuid";
 
+// Função para formatar a data no fuso de São Paulo
+const formatDateToSaoPaulo = (dateString: string) => {
+  if (!dateString) return "";
+  return new Date(dateString).toLocaleString("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    hour12: false,
+  });
+};
+
 interface Props {
   isOpen: boolean;
   onClose: () => void;
@@ -91,7 +100,7 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
       return;
     }
 
-    // Cria o pedido com UUID
+    // Cria o pedido com UUID e data como Date
     const pedidoData = {
       id_uuid: uuidv4(),
       pedido: items.map((item) => ({
@@ -100,7 +109,7 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
         price: item.price,
       })),
       total,
-      data: new Date(),
+      data: new Date(), // Usa Date para o IndexedDB
       status: "pendente",
       tipo: pedidoTipo,
       mesa: mesaSelecionada,
@@ -113,8 +122,9 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
       await db.savePedido(pedidoData);
       await carregarHistorico();
 
-      // Envia para Supabase
-      const { error } = await supabase.from("pedidos").insert(pedidoData);
+      // Envia para Supabase com data convertida para UTC string
+      const supabaseData = { ...pedidoData, data: pedidoData.data.toISOString() };
+      const { error } = await supabase.from("pedidos").insert(supabaseData);
       if (error) throw error;
 
       toast.success(
@@ -340,7 +350,7 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
                   {historico.map((pedido) => (
                     <Flex key={pedido.id} justify="space-between" w="full" p={2} bg="green.50" borderRadius="md">
                       <Text fontSize="sm" color="gray.700">
-                        Pedido #{pedido.id}: R$ {pedido.total.toFixed(2)} em {new Date(pedido.data).toLocaleString()}
+                        Pedido #{pedido.id}: R$ {pedido.total.toFixed(2)} em {formatDateToSaoPaulo(pedido.data)}
                       </Text>
                       <Button size="xs" colorScheme="red" onClick={() => db.deletePedido(pedido.id).then(carregarHistorico)}>
                         Excluir

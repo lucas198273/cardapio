@@ -39,12 +39,15 @@ export default function DeliveryHeader({ onCartClick, cartItemCount }: Props) {
     { to: "/", label: "Início" },
     { to: "/politicas", label: "Políticas" },
     { to: "/about", label: "Sobre" },
+    { to: "/orders", label: "Pedidos" },
   ];
 
   return (
     <Box
       position="fixed"
       top="0"
+      left="0"
+      right="0"
       w="full"
       zIndex="50"
       bg={isScrolled ? "whiteAlpha.900" : "white"}
@@ -60,6 +63,7 @@ export default function DeliveryHeader({ onCartClick, cartItemCount }: Props) {
         px={{ base: 4, md: 8 }}
         align="center"
         justify="space-between"
+        position="relative"
       >
         {/* Mobile Menu */}
         <IconButton
@@ -69,6 +73,7 @@ export default function DeliveryHeader({ onCartClick, cartItemCount }: Props) {
           onClick={isOpen ? onClose : onOpen}
           variant="ghost"
           color="red.500"
+          mr={2}
         />
 
         {/* Desktop Nav Links */}
@@ -87,7 +92,7 @@ export default function DeliveryHeader({ onCartClick, cartItemCount }: Props) {
           ))}
         </HStack>
 
-        {/* Logo Center */}
+        {/* Logo Central */}
         <Box
           position="absolute"
           left="50%"
@@ -96,6 +101,7 @@ export default function DeliveryHeader({ onCartClick, cartItemCount }: Props) {
           borderRadius="full"
           p="1"
           boxShadow="lg"
+          flexShrink={0}
         >
           <Link as={RouterLink} to="/">
             <Image
@@ -103,6 +109,7 @@ export default function DeliveryHeader({ onCartClick, cartItemCount }: Props) {
               alt="The Brothers Hamburgueria"
               h="14"
               className="rounded-full transition-transform duration-300 hover:scale-105"
+              objectFit="contain"
             />
           </Link>
         </Box>
