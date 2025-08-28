@@ -39,7 +39,6 @@ export default function DeliveryHeader({ onCartClick, cartItemCount }: Props) {
     { to: "/", label: "Início" },
     { to: "/politicas", label: "Políticas" },
     { to: "/about", label: "Sobre" },
-    { to: "/checkout", label: "Checkout" },
   ];
 
   return (

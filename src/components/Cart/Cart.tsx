@@ -21,7 +21,9 @@ import {
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { verificarHorarioAtual } from "../../utils/horarios";
-import { savePedido, getPedidos, clearPedidos, deletePedido } from "../../db/db"; // Ajuste o caminho
+import db from "../../db/db";
+import { supabase } from "../../lib/supabaseClient";
+import { v4 as uuidv4 } from "uuid";
 
 interface Props {
   isOpen: boolean;
@@ -56,7 +58,7 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
 
   const carregarHistorico = async () => {
     try {
-      const pedidos = await getPedidos();
+      const pedidos = await db.getPedidos();
       setHistorico(pedidos);
     } catch (err) {
       console.error("Erro ao carregar histórico:", err);
@@ -89,8 +91,9 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
       return;
     }
 
+    // Cria o pedido com UUID
     const pedidoData = {
-      userId: "cliente123",
+      id_uuid: uuidv4(),
       pedido: items.map((item) => ({
         name: item.name,
         quantity: item.quantity,
@@ -106,14 +109,23 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
     };
 
     try {
-      await savePedido(pedidoData);
+      // Salva no Dexie
+      await db.savePedido(pedidoData);
       await carregarHistorico();
-      toast.success("Pedido salvo e enviado para o WhatsApp!");
+
+      // Envia para Supabase
+      const { error } = await supabase.from("pedidos").insert(pedidoData);
+      if (error) throw error;
+
+      toast.success(
+        "Pedido salvo localmente, enviado ao Supabase e enviado para o WhatsApp!"
+      );
     } catch (err) {
-      console.error("Erro ao salvar pedido:", err);
-      toast.error("Erro ao salvar o pedido!");
+      console.error("Erro ao salvar ou enviar pedido:", err);
+      toast.error("Erro ao salvar o pedido ou enviá-lo ao Supabase!");
     }
 
+    // Formata mensagem para WhatsApp
     const itensFormatados = items
       .map(
         (item) =>
@@ -141,7 +153,7 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
 
   const handleClearHistorico = async () => {
     try {
-      await clearPedidos();
+      await db.clearPedidos();
       await carregarHistorico();
       toast.info("Histórico limpo!");
     } catch (err) {
@@ -196,14 +208,9 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
           </Button>
         </Flex>
 
-        {/* ALERTA FIXO DE FECHADO */}
+        {/* ALERTA DE FECHADO */}
         {!aberto && (
-          <Alert
-            status="error"
-            variant="solid"
-            borderRadius="none"
-            justifyContent="center"
-          >
+          <Alert status="error" variant="solid" borderRadius="none" justifyContent="center">
             <AlertIcon />
             {mensagemHorario || "⚠️ Estamos fechados no momento"}
           </Alert>
@@ -235,9 +242,7 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
                     <button
                       key={tipo}
                       onClick={() => setPedidoTipo(tipo as "mesa" | "entrega")}
-                      className={`${styles.button} ${
-                        isActive ? styles.buttonActive : styles.buttonInactive
-                      }`}
+                      className={`${styles.button} ${isActive ? styles.buttonActive : styles.buttonInactive}`}
                     >
                       {tipo === "mesa" ? "Atendimento em Mesa" : "Entrega"}
                     </button>
@@ -253,12 +258,8 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
                     return (
                       <button
                         key={num}
-                        onClick={() =>
-                          setMesaSelecionada(isSelected ? null : String(num))
-                        }
-                        className={`${styles.button} ${
-                          isSelected ? styles.buttonActive : styles.buttonInactive
-                        }`}
+                        onClick={() => setMesaSelecionada(isSelected ? null : String(num))}
+                        className={`${styles.button} ${isSelected ? styles.buttonActive : styles.buttonInactive}`}
                       >
                         Mesa {num}
                       </button>
@@ -283,9 +284,7 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
                           : "Referência (opcional)"
                       }
                       value={endereco[_field as keyof typeof endereco]}
-                      onChange={(e) =>
-                        setEndereco({ ...endereco, [_field]: e.target.value })
-                      }
+                      onChange={(e) => setEndereco({ ...endereco, [_field]: e.target.value })}
                       focusBorderColor="green.600"
                       borderRadius="md"
                     />
@@ -306,14 +305,7 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
             </VStack>
 
             {/* TOTAL */}
-            <Flex
-              align="center"
-              justify="space-between"
-              p={6}
-              borderTop="1px"
-              borderColor="green.600"
-              bg="green.50"
-            >
+            <Flex align="center" justify="space-between" p={6} borderTop="1px" borderColor="green.600" bg="green.50">
               <Text fontWeight="semibold" fontSize="xl" color="green.600">
                 Total:
               </Text>
@@ -323,40 +315,17 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
             </Flex>
 
             {/* BUTTONS */}
-            <Flex
-              direction={{ base: "column", sm: "row" }}
-              gap={4}
-              px={6}
-              pb={6}
-            >
-              <Button
-                onClick={handleClearCart}
-                className={`${styles.button} ${styles.limpar}`}
-                isDisabled={items.length === 0}
-                w={{ base: "full", sm: "auto" }}
-              >
+            <Flex direction={{ base: "column", sm: "row" }} gap={4} px={6} pb={6}>
+              <Button onClick={handleClearCart} className={`${styles.button} ${styles.limpar}`} isDisabled={items.length === 0} w={{ base: "full", sm: "auto" }}>
                 Limpar
               </Button>
-              <Button
-                onClick={handleWhatsAppClick}
-                className={styles.button}
-                isDisabled={items.length === 0}
-                w={{ base: "full", sm: "auto" }}
-              >
+              <Button onClick={handleWhatsAppClick} className={styles.button} isDisabled={items.length === 0} w={{ base: "full", sm: "auto" }}>
                 Finalizar no WhatsApp
               </Button>
-              <Button
-                onClick={carregarHistorico}
-                className={styles.button}
-                w={{ base: "full", sm: "auto" }}
-              >
+              <Button onClick={carregarHistorico} className={styles.button} w={{ base: "full", sm: "auto" }}>
                 Ver Histórico
               </Button>
-              <Button
-                onClick={handleClearHistorico}
-                className={`${styles.button} ${styles.limpar}`}
-                w={{ base: "full", sm: "auto" }}
-              >
+              <Button onClick={handleClearHistorico} className={`${styles.button} ${styles.limpar}`} w={{ base: "full", sm: "auto" }}>
                 Limpar Histórico
               </Button>
             </Flex>
@@ -369,23 +338,11 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
                 </Text>
                 <VStack spacing={1} align="start">
                   {historico.map((pedido) => (
-                    <Flex
-                      key={pedido.id}
-                      justify="space-between"
-                      w="full"
-                      p={2}
-                      bg="green.50"
-                      borderRadius="md"
-                    >
+                    <Flex key={pedido.id} justify="space-between" w="full" p={2} bg="green.50" borderRadius="md">
                       <Text fontSize="sm" color="gray.700">
-                        Pedido #{pedido.id}: R$ {pedido.total.toFixed(2)} em{" "}
-                        {new Date(pedido.data).toLocaleString()}
+                        Pedido #{pedido.id}: R$ {pedido.total.toFixed(2)} em {new Date(pedido.data).toLocaleString()}
                       </Text>
-                      <Button
-                        size="xs"
-                        colorScheme="red"
-                        onClick={() => deletePedido(pedido.id).then(carregarHistorico)}
-                      >
+                      <Button size="xs" colorScheme="red" onClick={() => db.deletePedido(pedido.id).then(carregarHistorico)}>
                         Excluir
                       </Button>
                     </Flex>

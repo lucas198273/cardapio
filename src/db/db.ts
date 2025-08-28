@@ -1,21 +1,19 @@
-import { openDB } from 'idb';
+import Dexie, { type Table } from "dexie";
 
-// Definição da interface para um item do pedido
 interface PedidoItem {
   name: string;
   quantity: number;
   price: number;
 }
 
-// Definição da interface para um pedido completo
-interface Pedido {
-  id?: number; // Opcional, pois é gerado automaticamente
-  userId: string;
+export interface Pedido {
+  id?: number; // Dexie auto incrementa
+  id_uuid: string; // UUID do pedido
   pedido: PedidoItem[];
   total: number;
   data: Date;
   status: string;
-  tipo?: 'mesa' | 'entrega';
+  tipo?: "mesa" | "entrega" | null;
   mesa?: string | null;
   observacao?: string;
   endereco?: {
@@ -26,35 +24,32 @@ interface Pedido {
   };
 }
 
-const dbPromise = openDB('pedidosDB', 1, {
-  upgrade(db) {
-    if (!db.objectStoreNames.contains('pedidos')) {
-      const store = db.createObjectStore('pedidos', { keyPath: 'id', autoIncrement: true });
-      store.createIndex('userId', 'userId', { unique: false });
-    }
-  },
-});
+export class PedidosDB extends Dexie {
+  pedidos!: Table<Pedido>;
 
-export const savePedido = async (pedidoData: Pedido): Promise<void> => {
-  const db = await dbPromise;
-  await db.add('pedidos', pedidoData);
-  console.log('Pedido salvo:', pedidoData);
-};
+  constructor() {
+    super("PedidosDB");
+    this.version(1).stores({
+      pedidos: "++id, id_uuid, pedido, status, total, mesa, tipo, observacao, endereco, data",
+    });
+  }
 
-export const getPedidos = async (userId: string = 'cliente123'): Promise<Pedido[]> => {
-  const db = await dbPromise;
-  const tx = db.transaction('pedidos', 'readonly');
-  const store = tx.objectStore('pedidos');
-  const index = store.index('userId');
-  return await index.getAll(userId);
-};
+  async savePedido(pedidoData: Pedido): Promise<number> {
+    return await this.pedidos.add(pedidoData);
+  }
 
-export const clearPedidos = async (): Promise<void> => {
-  const db = await dbPromise;
-  await db.clear('pedidos');
-};
+  async getPedidos(): Promise<Pedido[]> {
+    return await this.pedidos.toArray();
+  }
 
-export const deletePedido = async (id: number): Promise<void> => {
-  const db = await dbPromise;
-  await db.delete('pedidos', id);
-};
+  async deletePedido(id: number): Promise<void> {
+    await this.pedidos.delete(id);
+  }
+
+  async clearPedidos(): Promise<void> {
+    await this.pedidos.clear();
+  }
+}
+
+export const db = new PedidosDB();
+export default db;
