@@ -21,7 +21,7 @@ import {
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { verificarHorarioAtual } from "../../utils/horarios";
-import db, { type Pedido } from "../../db/db";
+import db, { type Order } from "../../db/db";
 import { supabase } from "../../lib/supabaseClient";
 import { v4 as uuidv4 } from "uuid";
 
@@ -55,7 +55,7 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
 
   const [aberto, setAberto] = useState(true);
   const [mensagemHorario, setMensagemHorario] = useState("");
-  const [historico, setHistorico] = useState<Pedido[]>([]);
+  const [historico, setHistorico] = useState<Order[]>([]);
 
   useEffect(() => {
     AOS.init({ duration: 300, easing: "ease-in-out", once: true });
@@ -67,7 +67,7 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
 
   const carregarHistorico = async () => {
     try {
-      const pedidos = await db.getPedidos();
+      const pedidos = await db.getOrders();
       setHistorico(pedidos);
     } catch (err) {
       console.error("Erro ao carregar histórico:", err);
@@ -100,7 +100,7 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
       return;
     }
 
-    const pedidoData: Pedido = {
+    const pedidoData: Order = {
       id_uuid: uuidv4(),
       pedido: items.map((item) => ({
         name: item.name,
@@ -120,7 +120,7 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
 
     try {
       // Salva no Dexie
-      const dexieId = await db.savePedido(pedidoData);
+      const dexieId = await db.saveOrder(pedidoData);
 
       // Salva no Supabase separadamente
       const { data, error } = await supabase
@@ -143,7 +143,7 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
       if (error) throw error;
 
       if (data?.id) {
-        await db.updatePedido(dexieId, { id_supabase: data.id });
+        await db.updateOrder(dexieId, { id_supabase: data.id });
       }
 
       toast.success("Pedido salvo e enviado com sucesso!");
@@ -281,7 +281,7 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
               <Button onClick={clearCart} className={`${styles.button} ${styles.limpar}`} w={{ base: "full", sm: "auto" }}>Limpar</Button>
               <Button onClick={handleWhatsAppClick} className={styles.button} w={{ base: "full", sm: "auto" }}>Finalizar no WhatsApp</Button>
               <Button onClick={carregarHistorico} className={styles.button} w={{ base: "full", sm: "auto" }}>Ver Histórico</Button>
-              <Button onClick={async () => { await db.clearPedidos(); carregarHistorico(); }} className={`${styles.button} ${styles.limpar}`} w={{ base: "full", sm: "auto" }}>Limpar Histórico</Button>
+              <Button onClick={async () => { await db.clearOrders(); carregarHistorico(); }} className={`${styles.button} ${styles.limpar}`} w={{ base: "full", sm: "auto" }}>Limpar Histórico</Button>
             </Flex>
 
             {/* HISTÓRICO */}
@@ -293,8 +293,8 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
                     <Flex key={pedido.id} justify="space-between" w="full" p={2} bg="green.50" borderRadius="md">
                       <Text fontSize="sm" color="gray.700">
                         Pedido #{pedido.id_supabase || pedido.id}: R$ {pedido.total.toFixed(2)} em {formatDateToSaoPaulo(pedido.data)}
-                      </Text>
-                      <Button size="xs" colorScheme="red" onClick={() => db.deletePedido(pedido.id!).then(carregarHistorico)}>Excluir</Button>
+                        </Text>
+                        <Button size="xs" colorScheme="red" onClick={() => db.deleteOrder(pedido.id!).then(carregarHistorico)}>Excluir</Button>
                     </Flex>
                   ))}
                 </VStack>

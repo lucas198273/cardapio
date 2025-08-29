@@ -1,16 +1,16 @@
 import Dexie, { type Table } from "dexie";
 
-export interface PedidoItem {
+export interface OrderItem {
   name: string;
   quantity: number;
   price: number;
 }
 
-export interface Pedido {
+export interface Order {
   id?: number; // Dexie auto incrementa
   id_supabase?: number | null; // ID do Supabase
   id_uuid: string; // UUID local
-  pedido: PedidoItem[];
+  pedido: OrderItem[];
   total: number;
   data: Date;
   status: "pendente" | "pago" | "pronto";
@@ -26,36 +26,36 @@ export interface Pedido {
   nome_cliente: string;
 }
 
-export class PedidosDB extends Dexie {
-  pedidos!: Table<Pedido, number>;
+export class OrdersDB extends Dexie {
+  Orders!: Table<Order, number>;
 
   constructor() {
-    super("PedidosDB");
+    super("OrdersDB");
     this.version(1).stores({
-      pedidos: "++id, id_uuid, id_supabase, pedido, status, total, mesa, tipo, observacao, endereco, data, nome_cliente",
+      Orders: "++id, id_uuid, id_supabase, Order, status, total, mesa, tipo, observacao, endereco, data, nome_cliente",
     });
   }
 
-  async savePedido(pedidoData: Pedido): Promise<number> {
-    return await this.pedidos.add(pedidoData);
+  async saveOrder(OrderData: Order): Promise<number> {
+    return await this.Orders.add(OrderData);
   }
 
-  async getPedidos(): Promise<Pedido[]> {
-    return await this.pedidos.toArray();
+  async getOrders(): Promise<Order[]> {
+    return await this.Orders.toArray();
   }
 
-  async updatePedido(id: number, changes: Partial<Pedido>): Promise<void> {
-    await this.pedidos.update(id, changes);
+  async updateOrder(id: number, changes: Partial<Order>): Promise<void> {
+    await this.Orders.update(id, changes);
   }
 
-  async deletePedido(id: number): Promise<void> {
-    await this.pedidos.delete(id);
+  async deleteOrder(id: number): Promise<void> {
+    await this.Orders.delete(id);
   }
 
-  async clearPedidos(): Promise<void> {
-    await this.pedidos.clear();
+  async clearOrders(): Promise<void> {
+    await this.Orders.clear();
   }
 }
 
-const db = new PedidosDB();
+const db = new OrdersDB();
 export default db;

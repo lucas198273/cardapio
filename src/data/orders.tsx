@@ -8,6 +8,7 @@ export interface Order {
   tipo: string | null;
   mesa: string | null;
   observacao: string | null;
+  nome_cliente: string | null;
   endereco: any; // jsonb
   pedido: { name: string; price: number; quantity: number }[] | null; // Itens do pedido
 }
