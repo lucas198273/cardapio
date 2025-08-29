@@ -21,11 +21,11 @@ import {
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { verificarHorarioAtual } from "../../utils/horarios";
-import db from "../../db/db";
+import db, { type Pedido } from "../../db/db";
 import { supabase } from "../../lib/supabaseClient";
 import { v4 as uuidv4 } from "uuid";
 
-// Função para formatar a data no fuso de São Paulo
+// Formata data para horário de São Paulo
 const formatDateToSaoPaulo = (dateString: string) => {
   if (!dateString) return "";
   return new Date(dateString).toLocaleString("pt-BR", {
@@ -44,6 +44,7 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
 
   const [pedidoTipo, setPedidoTipo] = useState<"mesa" | "entrega" | null>(null);
   const [mesaSelecionada, setMesaSelecionada] = useState<string | null>(null);
+  const [nomeCliente, setNomeCliente] = useState(""); // NOVO CAMPO
   const [observacao, setObservacao] = useState("");
   const [endereco, setEndereco] = useState({
     nome: "",
@@ -54,7 +55,7 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
 
   const [aberto, setAberto] = useState(true);
   const [mensagemHorario, setMensagemHorario] = useState("");
-  const [historico, setHistorico] = useState<any[]>([]);
+  const [historico, setHistorico] = useState<Pedido[]>([]);
 
   useEffect(() => {
     AOS.init({ duration: 300, easing: "ease-in-out", once: true });
@@ -79,10 +80,9 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
 
   const handleWhatsAppClick = async () => {
     if (!aberto) {
-      toast.error(`⚠️ Desculpe, estamos fechados no momento! ${mensagemHorario}`);
+      toast.error(`⚠️ Estamos fechados! ${mensagemHorario}`);
       return;
     }
-
     if (items.length === 0) {
       toast.warning("Seu carrinho está vazio!");
       return;
@@ -91,8 +91,9 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
       toast.warning("Escolha o tipo de pedido!");
       return;
     }
-    if (pedidoTipo === "mesa" && !mesaSelecionada) {
-      toast.warning("Selecione uma mesa!");
+    if (pedidoTipo === "mesa" && (!mesaSelecionada || !nomeCliente.trim())) {
+      if (!mesaSelecionada) toast.warning("Selecione uma mesa!");
+      if (!nomeCliente.trim()) toast.warning("Informe o nome do cliente!");
       return;
     }
     if (pedidoTipo === "entrega" && (!endereco.nome || !endereco.rua || !endereco.bairro)) {
@@ -100,8 +101,8 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
       return;
     }
 
-    // Cria o pedido com UUID e data como Date
-    const pedidoData = {
+    // Cria pedido
+    const pedidoData: Pedido = {
       id_uuid: uuidv4(),
       pedido: items.map((item) => ({
         name: item.name,
@@ -109,33 +110,52 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
         price: item.price,
       })),
       total,
-      data: new Date(), // Usa Date para o IndexedDB
+      data: new Date(),
       status: "pendente",
       tipo: pedidoTipo,
-      mesa: mesaSelecionada,
+      mesa: pedidoTipo === "mesa" ? mesaSelecionada : undefined,
+      nome_cliente: pedidoTipo === "mesa" ? nomeCliente : endereco.nome,
       observacao,
-      endereco,
+      endereco: pedidoTipo === "entrega" ? endereco : undefined,
     };
 
     try {
       // Salva no Dexie
-      await db.savePedido(pedidoData);
-      await carregarHistorico();
+      const dexieId = await db.savePedido(pedidoData);
 
-      // Envia para Supabase com data convertida para UTC string
-      const supabaseData = { ...pedidoData, data: pedidoData.data.toISOString() };
-      const { error } = await supabase.from("pedidos").insert(supabaseData);
+      // Salva no Supabase
+      const { data, error } = await supabase
+        .from("pedidos")
+        .insert({
+          id_uuid: pedidoData.id_uuid,
+          pedido: pedidoData.pedido,
+          total: pedidoData.total,
+          data: pedidoData.data.toISOString(),
+          status: pedidoData.status,
+          tipo: pedidoData.tipo,
+          mesa: pedidoData.mesa,
+          observacao: pedidoData.observacao,
+          nome_cliente: pedidoData.nome_cliente,
+          endereco: pedidoData.endereco,
+        })
+        .select("id")
+        .single();
+
       if (error) throw error;
 
-      toast.success(
-        "Pedido salvo localmente, enviado ao Supabase e enviado para o WhatsApp!"
-      );
+      if (data?.id) {
+        await db.updatePedido(dexieId, { id_supabase: data.id });
+      }
+
+      toast.success("Pedido salvo e enviado com sucesso!");
+      clearCart();
+      await carregarHistorico();
     } catch (err) {
-      console.error("Erro ao salvar ou enviar pedido:", err);
-      toast.error("Erro ao salvar o pedido ou enviá-lo ao Supabase!");
+      console.error(err);
+      toast.error("Erro ao salvar pedido!");
     }
 
-    // Formata mensagem para WhatsApp
+    // Formata mensagem WhatsApp
     const itensFormatados = items
       .map(
         (item) =>
@@ -144,7 +164,8 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
       .join("\n\n");
 
     let infoAdicional = "";
-    if (pedidoTipo === "mesa") infoAdicional = `Mesa: ${mesaSelecionada}`;
+    if (pedidoTipo === "mesa")
+      infoAdicional = `Mesa: ${mesaSelecionada}\nCliente: ${nomeCliente}`;
     if (pedidoTipo === "entrega")
       infoAdicional = `Nome: ${endereco.nome}\nEndereço: ${endereco.rua}, ${endereco.bairro}\nReferência: ${endereco.referencia}`;
 
@@ -154,22 +175,6 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
 
     const link = `https://wa.me/5531990639998?text=${encodeURIComponent(mensagem)}`;
     window.open(link, "_blank");
-  };
-
-  const handleClearCart = () => {
-    clearCart();
-    toast.info("Carrinho limpo!");
-  };
-
-  const handleClearHistorico = async () => {
-    try {
-      await db.clearPedidos();
-      await carregarHistorico();
-      toast.info("Histórico limpo!");
-    } catch (err) {
-      console.error("Erro ao limpar histórico:", err);
-      toast.error("Erro ao limpar o histórico!");
-    }
   };
 
   return (
@@ -197,30 +202,18 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
         onClick={(e) => e.stopPropagation()}
       >
         {/* HEADER */}
-        <Flex
-          align="center"
-          justify="space-between"
-          p={6}
-          borderBottom="1px"
-          borderColor="green.600"
-        >
+        <Flex align="center" justify="space-between" p={6} borderBottom="1px" borderColor="green.600">
           <Text fontSize="2xl" fontWeight="bold" color="green.600">
             Meu Carrinho
           </Text>
-          <Button
-            variant="ghost"
-            color="green.600"
-            fontSize="2xl"
-            onClick={onClose}
-            aria-label="Fechar carrinho"
-          >
+          <Button variant="ghost" color="green.600" fontSize="2xl" onClick={onClose}>
             ✕
           </Button>
         </Flex>
 
         {/* ALERTA DE FECHADO */}
         {!aberto && (
-          <Alert status="error" variant="solid" borderRadius="none" justifyContent="center">
+          <Alert status="error" variant="solid" justifyContent="center">
             <AlertIcon />
             {mensagemHorario || "⚠️ Estamos fechados no momento"}
           </Alert>
@@ -262,20 +255,30 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
 
               {/* MESAS */}
               {pedidoTipo === "mesa" && (
-                <div className={styles.mesaGrid}>
-                  {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => {
-                    const isSelected = mesaSelecionada === String(num);
-                    return (
-                      <button
-                        key={num}
-                        onClick={() => setMesaSelecionada(isSelected ? null : String(num))}
-                        className={`${styles.button} ${isSelected ? styles.buttonActive : styles.buttonInactive}`}
-                      >
-                        Mesa {num}
-                      </button>
-                    );
-                  })}
-                </div>
+                <>
+                  <Input
+                    placeholder="Nome do cliente"
+                    value={nomeCliente}
+                    onChange={(e) => setNomeCliente(e.target.value)}
+                    focusBorderColor="green.600"
+                  />
+                  <div className={styles.mesaGrid}>
+                    {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => {
+                      const isSelected = mesaSelecionada === String(num);
+                      return (
+                        <button
+                          key={num}
+                          onClick={() =>
+                            setMesaSelecionada(isSelected ? null : String(num))
+                          }
+                          className={`${styles.button} ${isSelected ? styles.buttonActive : styles.buttonInactive}`}
+                        >
+                          Mesa {num}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
               )}
 
               {/* CAMPOS DE ENTREGA */}
@@ -294,7 +297,9 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
                           : "Referência (opcional)"
                       }
                       value={endereco[_field as keyof typeof endereco]}
-                      onChange={(e) => setEndereco({ ...endereco, [_field]: e.target.value })}
+                      onChange={(e) =>
+                        setEndereco({ ...endereco, [_field]: e.target.value })
+                      }
                       focusBorderColor="green.600"
                       borderRadius="md"
                     />
@@ -315,7 +320,14 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
             </VStack>
 
             {/* TOTAL */}
-            <Flex align="center" justify="space-between" p={6} borderTop="1px" borderColor="green.600" bg="green.50">
+            <Flex
+              align="center"
+              justify="space-between"
+              p={6}
+              borderTop="1px"
+              borderColor="green.600"
+              bg="green.50"
+            >
               <Text fontWeight="semibold" fontSize="xl" color="green.600">
                 Total:
               </Text>
@@ -326,16 +338,16 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
 
             {/* BUTTONS */}
             <Flex direction={{ base: "column", sm: "row" }} gap={4} px={6} pb={6}>
-              <Button onClick={handleClearCart} className={`${styles.button} ${styles.limpar}`} isDisabled={items.length === 0} w={{ base: "full", sm: "auto" }}>
+              <Button onClick={clearCart} className={`${styles.button} ${styles.limpar}`} w={{ base: "full", sm: "auto" }}>
                 Limpar
               </Button>
-              <Button onClick={handleWhatsAppClick} className={styles.button} isDisabled={items.length === 0} w={{ base: "full", sm: "auto" }}>
+              <Button onClick={handleWhatsAppClick} className={styles.button} w={{ base: "full", sm: "auto" }}>
                 Finalizar no WhatsApp
               </Button>
               <Button onClick={carregarHistorico} className={styles.button} w={{ base: "full", sm: "auto" }}>
                 Ver Histórico
               </Button>
-              <Button onClick={handleClearHistorico} className={`${styles.button} ${styles.limpar}`} w={{ base: "full", sm: "auto" }}>
+              <Button onClick={async () => { await db.clearPedidos(); carregarHistorico(); }} className={`${styles.button} ${styles.limpar}`} w={{ base: "full", sm: "auto" }}>
                 Limpar Histórico
               </Button>
             </Flex>
@@ -350,9 +362,9 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
                   {historico.map((pedido) => (
                     <Flex key={pedido.id} justify="space-between" w="full" p={2} bg="green.50" borderRadius="md">
                       <Text fontSize="sm" color="gray.700">
-                        Pedido #{pedido.id}: R$ {pedido.total.toFixed(2)} em {formatDateToSaoPaulo(pedido.data)}
+                        Pedido #{pedido.id_supabase || pedido.id}: R$ {pedido.total.toFixed(2)} em {formatDateToSaoPaulo(pedido.data.toISOString())}
                       </Text>
-                      <Button size="xs" colorScheme="red" onClick={() => db.deletePedido(pedido.id).then(carregarHistorico)}>
+                      <Button size="xs" colorScheme="red" onClick={() => db.deletePedido(pedido.id!).then(carregarHistorico)}>
                         Excluir
                       </Button>
                     </Flex>
