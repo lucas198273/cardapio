@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { getOrders, type Order } from "../data/orders";
 import DateFilter from "../components/Order/DateFilter";
-import { Box, Heading, Flex, Grid, GridItem } from "@chakra-ui/react";
+import { Box, Heading, Flex, Grid, GridItem, Button } from "@chakra-ui/react";
 import OrderCard from "../components/Order/OrderCard";
+import { generatePDF } from "../utils/pdfExport"; // Ajuste o caminho conforme necessário
 
 // Função para converter data no formato brasileiro (DD/MM/YYYY, HH:MM:SS) para ISO
 const parseBrazilianDate = (dateStr: string): Date | null => {
@@ -46,6 +47,10 @@ export default function OrdersPanel() {
     return orderDateStr === selectedDate;
   });
 
+  const handleExportPDF = () => {
+    generatePDF(filteredOrders, selectedDate);
+  };
+
   return (
     <Box className="p-8 mt-24">
       <Heading as="h1" size="xl" fontWeight="bold" mb="6">
@@ -54,6 +59,13 @@ export default function OrdersPanel() {
 
       <Flex mb="6" align="center" justify="space-between">
         <DateFilter selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
+        <Button
+          colorScheme="teal"
+          onClick={handleExportPDF}
+          isDisabled={filteredOrders.length === 0}
+        >
+          Exportar PDF
+        </Button>
       </Flex>
 
       {loading ? (
