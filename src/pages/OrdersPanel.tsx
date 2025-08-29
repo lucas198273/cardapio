@@ -79,7 +79,7 @@ export default function OrdersPanel() {
             <GridItem key={order.id}>
               <OrderCard
                 order={order}
-                setOrders={setOrders}
+                
               />
             </GridItem>
           ))}
