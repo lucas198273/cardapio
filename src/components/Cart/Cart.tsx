@@ -26,9 +26,9 @@ import { supabase } from "../../lib/supabaseClient";
 import { v4 as uuidv4 } from "uuid";
 
 // Formata data para horário de São Paulo
-const formatDateToSaoPaulo = (dateString: string) => {
-  if (!dateString) return "";
-  return new Date(dateString).toLocaleString("pt-BR", {
+const formatDateToSaoPaulo = (date: string | Date) => {
+  const d = typeof date === "string" ? new Date(date) : date;
+  return d.toLocaleString("pt-BR", {
     timeZone: "America/Sao_Paulo",
     hour12: false,
   });
@@ -44,7 +44,7 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
 
   const [pedidoTipo, setPedidoTipo] = useState<"mesa" | "entrega" | null>(null);
   const [mesaSelecionada, setMesaSelecionada] = useState<string | null>(null);
-  const [nomeCliente, setNomeCliente] = useState(""); // NOVO CAMPO
+  const [nomeCliente, setNomeCliente] = useState("");
   const [observacao, setObservacao] = useState("");
   const [endereco, setEndereco] = useState({
     nome: "",
@@ -59,7 +59,6 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
 
   useEffect(() => {
     AOS.init({ duration: 300, easing: "ease-in-out", once: true });
-
     const status = verificarHorarioAtual();
     setAberto(status.aberto);
     setMensagemHorario(status.mensagem);
@@ -101,7 +100,6 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
       return;
     }
 
-    // Cria pedido
     const pedidoData: Pedido = {
       id_uuid: uuidv4(),
       pedido: items.map((item) => ({
@@ -117,13 +115,14 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
       nome_cliente: pedidoTipo === "mesa" ? nomeCliente : endereco.nome,
       observacao,
       endereco: pedidoTipo === "entrega" ? endereco : undefined,
+      id_supabase: null,
     };
 
     try {
       // Salva no Dexie
       const dexieId = await db.savePedido(pedidoData);
 
-      // Salva no Supabase
+      // Salva no Supabase separadamente
       const { data, error } = await supabase
         .from("pedidos")
         .insert({
@@ -157,17 +156,12 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
 
     // Formata mensagem WhatsApp
     const itensFormatados = items
-      .map(
-        (item) =>
-          `• ${item.name}\n  Quantidade: ${item.quantity}\n  Valor: R$${item.price.toFixed(2)}`
-      )
+      .map((item) => `• ${item.name}\n  Quantidade: ${item.quantity}\n  Valor: R$${item.price.toFixed(2)}`)
       .join("\n\n");
 
     let infoAdicional = "";
-    if (pedidoTipo === "mesa")
-      infoAdicional = `Mesa: ${mesaSelecionada}\nCliente: ${nomeCliente}`;
-    if (pedidoTipo === "entrega")
-      infoAdicional = `Nome: ${endereco.nome}\nEndereço: ${endereco.rua}, ${endereco.bairro}\nReferência: ${endereco.referencia}`;
+    if (pedidoTipo === "mesa") infoAdicional = `Mesa: ${mesaSelecionada}\nCliente: ${nomeCliente}`;
+    if (pedidoTipo === "entrega") infoAdicional = `Nome: ${endereco.nome}\nEndereço: ${endereco.rua}, ${endereco.bairro}\nReferência: ${endereco.referencia}`;
 
     const mensagem = `Olá! Gostaria de fazer o pedido:\n\n${itensFormatados}\n\nTotal: R$${total.toFixed(
       2
@@ -178,17 +172,7 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <Box
-      position="fixed"
-      inset={0}
-      bg="blackAlpha.700"
-      display="flex"
-      alignItems="center"
-      justifyContent="center"
-      zIndex={50}
-      p={4}
-      onClick={onClose}
-    >
+    <Box position="fixed" inset={0} bg="blackAlpha.700" display="flex" alignItems="center" justifyContent="center" zIndex={50} p={4} onClick={onClose}>
       <Box
         data-aos="zoom-in"
         bg="white"
@@ -203,12 +187,8 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
       >
         {/* HEADER */}
         <Flex align="center" justify="space-between" p={6} borderBottom="1px" borderColor="green.600">
-          <Text fontSize="2xl" fontWeight="bold" color="green.600">
-            Meu Carrinho
-          </Text>
-          <Button variant="ghost" color="green.600" fontSize="2xl" onClick={onClose}>
-            ✕
-          </Button>
+          <Text fontSize="2xl" fontWeight="bold" color="green.600">Meu Carrinho</Text>
+          <Button variant="ghost" color="green.600" fontSize="2xl" onClick={onClose}>✕</Button>
         </Flex>
 
         {/* ALERTA DE FECHADO */}
@@ -221,23 +201,17 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
 
         {/* EMPTY CART */}
         {items.length === 0 ? (
-          <Text p={6} textAlign="center" color="gray.500" fontSize="lg">
-            Seu carrinho está vazio.
-          </Text>
+          <Text p={6} textAlign="center" color="gray.500" fontSize="lg">Seu carrinho está vazio.</Text>
         ) : (
           <>
             {/* ITENS */}
             <VStack spacing={2} p={4}>
-              {items.map((item) => (
-                <CartItemRow key={item.id} item={item} onRemove={removeItem} />
-              ))}
+              {items.map((item) => <CartItemRow key={item.id} item={item} onRemove={removeItem} />)}
             </VStack>
 
             {/* PEDIDO TIPO */}
             <VStack spacing={4} px={6} py={4} align="start">
-              <Text fontWeight="semibold" color="green.600">
-                Tipo de Pedido:
-              </Text>
+              <Text fontWeight="semibold" color="green.600">Tipo de Pedido:</Text>
               <HStack spacing={4} flexWrap="wrap">
                 {["mesa", "entrega"].map((tipo) => {
                   const isActive = pedidoTipo === tipo;
@@ -256,25 +230,12 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
               {/* MESAS */}
               {pedidoTipo === "mesa" && (
                 <>
-                  <Input
-                    placeholder="Nome do cliente"
-                    value={nomeCliente}
-                    onChange={(e) => setNomeCliente(e.target.value)}
-                    focusBorderColor="green.600"
-                  />
+                  <Input placeholder="Nome do cliente" value={nomeCliente} onChange={(e) => setNomeCliente(e.target.value)} focusBorderColor="green.600" />
                   <div className={styles.mesaGrid}>
                     {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => {
                       const isSelected = mesaSelecionada === String(num);
                       return (
-                        <button
-                          key={num}
-                          onClick={() =>
-                            setMesaSelecionada(isSelected ? null : String(num))
-                          }
-                          className={`${styles.button} ${isSelected ? styles.buttonActive : styles.buttonInactive}`}
-                        >
-                          Mesa {num}
-                        </button>
+                        <button key={num} onClick={() => setMesaSelecionada(isSelected ? null : String(num))} className={`${styles.button} ${isSelected ? styles.buttonActive : styles.buttonInactive}`}>Mesa {num}</button>
                       );
                     })}
                   </div>
@@ -297,9 +258,7 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
                           : "Referência (opcional)"
                       }
                       value={endereco[_field as keyof typeof endereco]}
-                      onChange={(e) =>
-                        setEndereco({ ...endereco, [_field]: e.target.value })
-                      }
+                      onChange={(e) => setEndereco({ ...endereco, [_field]: e.target.value })}
                       focusBorderColor="green.600"
                       borderRadius="md"
                     />
@@ -308,65 +267,34 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
               )}
 
               {/* OBSERVAÇÃO */}
-              <Textarea
-                placeholder="Observação do pedido (opcional)"
-                value={observacao}
-                onChange={(e) => setObservacao(e.target.value)}
-                focusBorderColor="green.600"
-                borderRadius="md"
-                w="full"
-                mt={2}
-              />
+              <Textarea placeholder="Observação do pedido (opcional)" value={observacao} onChange={(e) => setObservacao(e.target.value)} focusBorderColor="green.600" borderRadius="md" w="full" mt={2} />
             </VStack>
 
             {/* TOTAL */}
-            <Flex
-              align="center"
-              justify="space-between"
-              p={6}
-              borderTop="1px"
-              borderColor="green.600"
-              bg="green.50"
-            >
-              <Text fontWeight="semibold" fontSize="xl" color="green.600">
-                Total:
-              </Text>
-              <Text color="green.600" fontWeight="bold" fontSize="2xl">
-                R$ {total.toFixed(2)}
-              </Text>
+            <Flex align="center" justify="space-between" p={6} borderTop="1px" borderColor="green.600" bg="green.50">
+              <Text fontWeight="semibold" fontSize="xl" color="green.600">Total:</Text>
+              <Text color="green.600" fontWeight="bold" fontSize="2xl">R$ {total.toFixed(2)}</Text>
             </Flex>
 
             {/* BUTTONS */}
             <Flex direction={{ base: "column", sm: "row" }} gap={4} px={6} pb={6}>
-              <Button onClick={clearCart} className={`${styles.button} ${styles.limpar}`} w={{ base: "full", sm: "auto" }}>
-                Limpar
-              </Button>
-              <Button onClick={handleWhatsAppClick} className={styles.button} w={{ base: "full", sm: "auto" }}>
-                Finalizar no WhatsApp
-              </Button>
-              <Button onClick={carregarHistorico} className={styles.button} w={{ base: "full", sm: "auto" }}>
-                Ver Histórico
-              </Button>
-              <Button onClick={async () => { await db.clearPedidos(); carregarHistorico(); }} className={`${styles.button} ${styles.limpar}`} w={{ base: "full", sm: "auto" }}>
-                Limpar Histórico
-              </Button>
+              <Button onClick={clearCart} className={`${styles.button} ${styles.limpar}`} w={{ base: "full", sm: "auto" }}>Limpar</Button>
+              <Button onClick={handleWhatsAppClick} className={styles.button} w={{ base: "full", sm: "auto" }}>Finalizar no WhatsApp</Button>
+              <Button onClick={carregarHistorico} className={styles.button} w={{ base: "full", sm: "auto" }}>Ver Histórico</Button>
+              <Button onClick={async () => { await db.clearPedidos(); carregarHistorico(); }} className={`${styles.button} ${styles.limpar}`} w={{ base: "full", sm: "auto" }}>Limpar Histórico</Button>
             </Flex>
 
             {/* HISTÓRICO */}
             {historico.length > 0 && (
               <VStack spacing={2} px={6} py={4} align="start">
-                <Text fontWeight="semibold" color="green.600">
-                  Histórico de Pedidos
-                </Text>
+                <Text fontWeight="semibold" color="green.600">Histórico de Pedidos</Text>
                 <VStack spacing={1} align="start">
                   {historico.map((pedido) => (
                     <Flex key={pedido.id} justify="space-between" w="full" p={2} bg="green.50" borderRadius="md">
                       <Text fontSize="sm" color="gray.700">
-                        Pedido #{pedido.id_supabase || pedido.id}: R$ {pedido.total.toFixed(2)} em {formatDateToSaoPaulo(pedido.data.toISOString())}
+                        Pedido #{pedido.id_supabase || pedido.id}: R$ {pedido.total.toFixed(2)} em {formatDateToSaoPaulo(pedido.data)}
                       </Text>
-                      <Button size="xs" colorScheme="red" onClick={() => db.deletePedido(pedido.id!).then(carregarHistorico)}>
-                        Excluir
-                      </Button>
+                      <Button size="xs" colorScheme="red" onClick={() => db.deletePedido(pedido.id!).then(carregarHistorico)}>Excluir</Button>
                     </Flex>
                   ))}
                 </VStack>

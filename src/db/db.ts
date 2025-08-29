@@ -7,9 +7,9 @@ export interface PedidoItem {
 }
 
 export interface Pedido {
-  id?: number; // ID local Dexie
-  id_supabase?: number; // ID do Supabase
-  id_uuid: string; // UUID do pedido
+  id?: number; // Dexie auto incrementa
+  id_supabase?: number | null; // ID do Supabase
+  id_uuid: string; // UUID local
   pedido: PedidoItem[];
   total: number;
   data: Date;
@@ -17,13 +17,13 @@ export interface Pedido {
   tipo?: "mesa" | "entrega" | null;
   mesa?: string | null;
   observacao?: string;
-  nome_cliente: string;
   endereco?: {
     nome: string;
     rua: string;
     bairro: string;
     referencia: string;
   };
+  nome_cliente: string;
 }
 
 export class PedidosDB extends Dexie {
@@ -32,7 +32,7 @@ export class PedidosDB extends Dexie {
   constructor() {
     super("PedidosDB");
     this.version(1).stores({
-      pedidos: "++id, id_uuid, id_supabase, pedido, status, total, mesa, tipo, observacao, nome_cliente, endereco, data",
+      pedidos: "++id, id_uuid, id_supabase, pedido, status, total, mesa, tipo, observacao, endereco, data, nome_cliente",
     });
   }
 
@@ -57,5 +57,5 @@ export class PedidosDB extends Dexie {
   }
 }
 
-export const db = new PedidosDB();
+const db = new PedidosDB();
 export default db;

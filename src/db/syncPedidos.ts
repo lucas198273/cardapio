@@ -1,4 +1,4 @@
-import { db, type Pedido } from "./db";
+import  db, {type Pedido } from "../db/db";
 import { supabase } from "../lib/supabaseClient";
 
 export async function syncPedidos() {
