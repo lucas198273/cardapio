@@ -10,7 +10,7 @@ export const horarioFuncionamento: HorarioDia[] = [
   { dia: "Quarta-feira", abertura: "18:00", fechamento: "03:00" },
   { dia: "Quinta-feira", abertura: "18:00", fechamento: "03:00" },
   { dia: "Sexta-feira", abertura: "18:00", fechamento: "03:00" },
-  { dia: "Sábado", abertura: "18:00", fechamento: "03:00" },
+  { dia: "Sábado", abertura: "10:00", fechamento: "03:00" },
   { dia: "Domingo", abertura: "18:00", fechamento: "03:00" },
 ];
 
