@@ -167,7 +167,7 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
       2
     )}\n${infoAdicional}\nObservação: ${observacao}`;
 
-    const link = `https://wa.me/5531990639998?text=${encodeURIComponent(mensagem)}`;
+    const link = `https://wa.me/5531999918730?text=${encodeURIComponent(mensagem)}`;
     window.open(link, "_blank");
   };
 

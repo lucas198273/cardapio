@@ -44,7 +44,7 @@ const SocialMediaSection: React.FC = () => {
 
             {/* WhatsApp */}
             <a
-              href="https://wa.me/5531990639998"
+              href="https://wa.me/5531999918730"
               target="_blank"
               rel="noopener noreferrer"
               className="flex flex-col items-center transition-transform hover:scale-110 text-green-500 hover:text-green-300"

@@ -106,7 +106,7 @@ export default function Hero() {
             color="whiteAlpha.900"
             data-aos="fade-up"
           >
-            <Text>📍 Rua das Tradições, 123 - Belo Horizonte/MG</Text>
+            <Text>📍Rua do Rosario nº1091   Bairro Angola - Betim/MG</Text>
             <Text>🕒 Terça a Domingo | 18h às 02h</Text>
           </Stack>
         </Box>
