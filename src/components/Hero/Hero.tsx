@@ -107,7 +107,7 @@ export default function Hero() {
             data-aos="fade-up"
           >
             <Text>📍Rua do Rosario nº1091   Bairro Angola - Betim/MG</Text>
-            <Text>🕒 Terça a Domingo | 18h às 02h</Text>
+            <Text>🕒 Terça a Domingo | 18h às 03h</Text>
           </Stack>
         </Box>
 
