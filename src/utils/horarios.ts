@@ -5,13 +5,13 @@ export type HorarioDia = {
 };
 
 export const horarioFuncionamento: HorarioDia[] = [
-  { dia: "Segunda-feira", abertura: "18:00", fechamento: "02:00" },
+  { dia: "Segunda-feira", abertura: "18:00", fechamento: "03:00" },
   { dia: "Terça-feira", abertura: null, fechamento: null },
-  { dia: "Quarta-feira", abertura: "18:00", fechamento: "02:00" },
-  { dia: "Quinta-feira", abertura: "10:00", fechamento: "02:00" },
-  { dia: "Sexta-feira", abertura: "10:00", fechamento: "03:00" },
-  { dia: "Sábado", abertura: "10:00", fechamento: "03:00" },
-  { dia: "Domingo", abertura: "18:00", fechamento: "02:00" },
+  { dia: "Quarta-feira", abertura: "18:00", fechamento: "03:00" },
+  { dia: "Quinta-feira", abertura: "18:00", fechamento: "03:00" },
+  { dia: "Sexta-feira", abertura: "18:00", fechamento: "03:00" },
+  { dia: "Sábado", abertura: "18:00", fechamento: "03:00" },
+  { dia: "Domingo", abertura: "18:00", fechamento: "03:00" },
 ];
 
 export function verificarHorarioAtual(): { aberto: boolean; mensagem: string } {
