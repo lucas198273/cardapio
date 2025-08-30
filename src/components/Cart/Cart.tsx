@@ -127,7 +127,7 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
       const { data, error } = await supabase
         .from("pedidos")
         .insert({
-          id_uuid: pedidoData.id_uuid,
+          id_uuid:  pedidoData.id_uuid,
           pedido: pedidoData.pedido,
           total: pedidoData.total,
           data: pedidoData.data.toISOString(),
