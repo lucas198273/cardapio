@@ -57,7 +57,7 @@ export default function AppContent() {
             </>
           }
         />
-        <Route path="/Politicas" element={<PoliticaEPrivacidade />} />
+        <Route path="/politicas" element={<PoliticaEPrivacidade />} />
         <Route path="/about" element={<AboutUs />} />
         <Route path="/orders" element={<OrdersPanel />} />
       </Routes>
