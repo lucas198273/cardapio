@@ -22,7 +22,6 @@ export default function AppContent() {
 
   useEffect(() => {
     AOS.init({ duration: 1000, once: true });
-
     async function testConnection() {
       const { data, error } = await supabase.from("pedidos").select("*").limit(1);
       if (error) {

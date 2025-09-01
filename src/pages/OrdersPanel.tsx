@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { getOrders, type Order } from "../data/orders";
 import DateFilter from "../components/Order/DateFilter";
-import { Box, Heading, Flex, Grid, GridItem, Button } from "@chakra-ui/react";
+import { Box, Heading, Flex, Grid, GridItem, Button, Alert, AlertIcon, AlertTitle, AlertDescription } from "@chakra-ui/react";
 import OrderCard from "../components/Order/OrderCard";
 import { generatePDF } from "../utils/pdfExport"; // Ajuste o caminho conforme necessário
 
@@ -15,14 +15,22 @@ const parseBrazilianDate = (dateStr: string): Date | null => {
   return new Date(`${year}-${month}-${day}T${hours}:${minutes}:${seconds}Z`);
 };
 
+// Função simulada para obter informações da assinatura
+const getSubscriptionInfo = () => {
+  // Substitua esta função pela lógica real de obtenção da assinatura
+  return {
+    expirationDate: "01/09/2025, 23:59:59", // Exemplo de data de vencimento
+  };
+};
+
 export default function OrdersPanel() {
   const [orders, setOrders] = useState<Order[]>([]);
-  const [selectedDate, setSelectedDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
-  );
+  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split("T")[0]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string>("");
 
   useEffect(() => {
+    // Carregar pedidos
     async function loadOrders() {
       try {
         const ordersData = await getOrders();
@@ -31,6 +39,20 @@ export default function OrdersPanel() {
         console.error("Erro ao carregar pedidos:", err);
       } finally {
         setLoading(false);
+      }
+    }
+
+    // Verificar status da assinatura
+    const { expirationDate } = getSubscriptionInfo();
+    const expirationDateObj = parseBrazilianDate(expirationDate);
+    if (expirationDateObj) {
+      const currentDate = new Date();
+      if (currentDate > expirationDateObj) {
+        setSubscriptionStatus("expirada");
+      } else if (currentDate.getTime() === expirationDateObj.getTime()) {
+        setSubscriptionStatus("vencendo hoje");
+      } else {
+        setSubscriptionStatus("ativa");
       }
     }
 
@@ -57,13 +79,34 @@ export default function OrdersPanel() {
         Pedidos
       </Heading>
 
+      {/* Aviso de assinatura */}
+      <Box mb="6">
+        {subscriptionStatus === "expirada" && (
+          <Alert status="error">
+            <AlertIcon />
+            <AlertTitle>Assinatura Expirada</AlertTitle>
+            <AlertDescription>Seu acesso ao sistema expirou. Por favor, renove sua assinatura para continuar utilizando.</AlertDescription>
+          </Alert>
+        )}
+        {subscriptionStatus === "vencendo hoje" && (
+          <Alert status="warning">
+            <AlertIcon />
+            <AlertTitle>Assinatura Vencendo Hoje</AlertTitle>
+            <AlertDescription>Seu acesso ao sistema vence hoje. Renove sua assinatura para evitar interrupções.</AlertDescription>
+          </Alert>
+        )}
+        {subscriptionStatus === "ativa" && (
+          <Alert status="success">
+            <AlertIcon />
+            <AlertTitle>Assinatura Ativa</AlertTitle>
+            <AlertDescription>Seu acesso ao sistema está ativo até {getSubscriptionInfo().expirationDate}.</AlertDescription>
+          </Alert>
+        )}
+      </Box>
+
       <Flex mb="6" align="center" justify="space-between">
         <DateFilter selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
-        <Button
-          colorScheme="teal"
-          onClick={handleExportPDF}
-          isDisabled={filteredOrders.length === 0}
-        >
+        <Button colorScheme="teal" onClick={handleExportPDF} isDisabled={filteredOrders.length === 0}>
           Exportar PDF
         </Button>
       </Flex>
@@ -71,16 +114,10 @@ export default function OrdersPanel() {
       {loading ? (
         <Heading as="h3" size="md">Carregando pedidos...</Heading>
       ) : filteredOrders.length > 0 ? (
-        <Grid
-          templateColumns={{ base: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }}
-          gap={6}
-        >
+        <Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }} gap={6}>
           {filteredOrders.map((order) => (
             <GridItem key={order.id}>
-              <OrderCard
-                order={order}
-                
-              />
+              <OrderCard order={order} />
             </GridItem>
           ))}
         </Grid>
