@@ -16,12 +16,14 @@ import HorioAlert from "./components/HorarioAlert/HorarioAlert.tsx";
 import AboutUs from "./pages/AboutUs.tsx";
 import { supabase } from "./lib/supabaseClient";
 import OrdersPanel from "./pages/OrdersPanel.tsx";
+import { dailyCleanupIfNeeded } from "./db/cleanup.ts";
 
 export default function AppContent() {
   const { items, total, isCartOpen, openCart, closeCart } = useCart();
 
   useEffect(() => {
     AOS.init({ duration: 1000, once: true });
+     dailyCleanupIfNeeded();
     async function testConnection() {
       const { data, error } = await supabase.from("pedidos").select("*").limit(1);
       if (error) {

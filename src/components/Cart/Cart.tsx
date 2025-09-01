@@ -38,7 +38,6 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
 }
-import { scheduleCleanupAt } from "../../db/cleanup";
 const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
   const { items, total, removeItem, clearCart } = useCart();
 
@@ -59,7 +58,7 @@ const Cart: React.FC<Props> = ({ isOpen, onClose }) => {
 
   useEffect(() => {
     AOS.init({ duration: 300, easing: "ease-in-out", once: true });
-    scheduleCleanupAt(12,0);
+   
     const status = verificarHorarioAtual();
     setAberto(status.aberto);
     setMensagemHorario(status.mensagem);
