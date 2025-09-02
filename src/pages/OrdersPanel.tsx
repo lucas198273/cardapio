@@ -19,7 +19,7 @@ const parseBrazilianDate = (dateStr: string): Date | null => {
 const getSubscriptionInfo = () => {
   // Substitua esta função pela lógica real de obtenção da assinatura
   return {
-    expirationDate: "01/09/2025, 23:59:59", // Exemplo de data de vencimento
+    expirationDate: "01/09/2026, 23:59:59", // Exemplo de data de vencimento
   };
 };
 
